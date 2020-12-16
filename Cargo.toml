@@ -1,0 +1,27 @@
+[package]
+name = "keybear-cli"
+version = "0.1.0"
+authors = ["Thomas Versteeg <thomas@versteeg.email>"]
+license = "AGPL-3.0-or-later"
+edition = "2018"
+readme = "README.md"
+repository = "https://github.com/keybear/keybear"
+description = "CLI client for self-hosted password manager"
+include = ["src/**/*", "LICENSE", "README.md"]
+
+[[bin]]
+name = "kb"
+path = "src/main.rs"
+
+[badges]
+maintenance = { status = "experimental" }
+
+[dependencies]
+clap = "3.0.0-beta.2"
+
+[package.metadata.deb]
+license-file = ["LICENSE", "0"]
+depends = "$auto, tor"
+assets = [
+	["target/release/kb", "/usr/bin/", "755"],
+]

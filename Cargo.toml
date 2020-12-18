@@ -20,6 +20,9 @@ maintenance = { status = "experimental" }
 anyhow = "1.0.35"
 clap = "3.0.0-beta.2"
 
+[dev-dependencies]
+assert_cmd = "1.0.2"
+
 [package.metadata.deb]
 license-file = ["LICENSE", "0"]
 depends = "$auto, tor"

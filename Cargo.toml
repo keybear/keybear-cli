@@ -6,7 +6,7 @@ license = "AGPL-3.0-or-later"
 edition = "2018"
 readme = "README.md"
 repository = "https://github.com/keybear/keybear"
-description = "CLI client for self-hosted password manager"
+description = "CLI client for Keybear password manager"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [[bin]]
@@ -17,6 +17,7 @@ path = "src/main.rs"
 maintenance = { status = "experimental" }
 
 [dependencies]
+anyhow = "1.0.35"
 clap = "3.0.0-beta.2"
 
 [package.metadata.deb]

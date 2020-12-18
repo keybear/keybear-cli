@@ -1,8 +1,11 @@
 #![forbid(unsafe_code)]
 
+mod command;
+
+use anyhow::{anyhow, bail, Result};
 use clap::clap_app;
 
-fn main() {
+fn main() -> Result<()> {
     let matches = clap_app!(keybear =>
         (version: clap::crate_version!())
         (author: clap::crate_authors!())
@@ -67,4 +70,59 @@ fn main() {
         )
     )
     .get_matches();
+
+    // Use the proper subcommand module for the invoked subcommand.
+    match matches
+        .subcommand()
+        .ok_or_else(|| anyhow!("No subcommand invoked"))?
+    {
+        // kb init
+        ("init", subcommand) => {
+            let url = subcommand.value_of_t_or_exit::<String>("URL");
+
+            command::init(&url)
+        }
+        // kb show
+        ("show", subcommand) => {
+            let url = subcommand.value_of_t_or_exit::<String>("URL");
+
+            command::show(&url)
+        }
+        // kb ls
+        ("ls", _) => command::ls(),
+        // kb find
+        ("find", _) => command::find(),
+        // kb generate
+        ("generate", subcommand) => {
+            let name = subcommand.value_of_t_or_exit::<String>("NAME");
+            let length = subcommand.value_of_t_or_exit::<usize>("length");
+            let echo = subcommand.is_present("echo");
+
+            command::generate(&name, length, echo)
+        }
+        // kb insert
+        ("insert", subcommand) => {
+            let name = subcommand.value_of_t_or_exit::<String>("NAME");
+            let password = subcommand.value_of_t_or_exit::<String>("PASSWORD");
+            let length = subcommand.value_of_t_or_exit::<usize>("length");
+            let echo = subcommand.is_present("echo");
+
+            command::insert(&name, &password, length, echo)
+        }
+        // kb edit
+        ("edit", subcommand) => {
+            let name = subcommand.value_of_t_or_exit::<String>("NAME");
+
+            command::edit(&name)
+        }
+        // kb rm
+        ("rm", subcommand) => {
+            let name = subcommand.value_of_t_or_exit::<String>("NAME");
+
+            command::rm(&name)
+        }
+        (other, _) => bail!("Unrecognized subcommand \"{}\"", other),
+    }?;
+
+    Ok(())
 }

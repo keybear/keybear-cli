@@ -9,7 +9,7 @@ fn no_subcommand() {
 }
 
 #[test]
-fn init() {
+fn register() {
     // Create a fake configuration file
     let tmp_dir = TempDir::new("kb").unwrap();
     let file_path = tmp_dir.path().join("config.toml");
@@ -18,9 +18,10 @@ fn init() {
         writeln!(tmp_file, r#"url = "test.onion""#).unwrap();
     }
 
+    // Register to a non-existing onion address
     let mut cmd = Command::cargo_bin("kb").unwrap();
 
-    cmd.args(&["init", "test.onion", "-c", file_path.to_str().unwrap()])
+    cmd.args(&["register", "test.onion", "-c", file_path.to_str().unwrap()])
         .assert()
         .success();
 }

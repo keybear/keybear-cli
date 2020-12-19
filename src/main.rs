@@ -2,6 +2,7 @@
 
 mod command;
 mod config;
+mod net;
 
 use crate::config::Config;
 use anyhow::{anyhow, bail, Result};
@@ -23,7 +24,8 @@ fn default_config_path() -> Result<String> {
         .to_string())
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let matches = clap_app!(keybear =>
         (version: clap::crate_version!())
         (author: clap::crate_authors!())
@@ -51,10 +53,9 @@ fn main() -> Result<()> {
             global(true)
             "Path of the configuration file")
 
-        (@subcommand init =>
-            (about: "Generate the configuration file")
+        (@subcommand register =>
+            (about: "Register this client to the server")
             (@setting DisableVersion)
-            (@arg URL: +required "Sets the server .onion URL")
         )
         (@subcommand show =>
             (about: "Show an existing password")
@@ -106,12 +107,8 @@ fn main() -> Result<()> {
         .subcommand()
         .ok_or_else(|| anyhow!("No subcommand invoked"))?
     {
-        // kb init
-        ("init", subcommand) => {
-            let url = subcommand.value_of_t_or_exit::<String>("URL");
-
-            command::init(config, &url)
-        }
+        // kb register
+        ("register", _) => command::register(config).await,
         // kb show
         ("show", subcommand) => {
             let url = subcommand.value_of_t_or_exit::<String>("URL");

@@ -1,9 +1,27 @@
 #![forbid(unsafe_code)]
 
 mod command;
+mod config;
 
+use crate::config::Config;
 use anyhow::{anyhow, bail, Result};
 use clap::clap_app;
+use directories_next::BaseDirs;
+use std::path::PathBuf;
+
+const CONFIG_ENV_NAME: &str = "KEYBEAR_CONFIG";
+const DEFAULT_CONFIG_FILENAME: &str = "keybear.toml";
+
+/// Get the default configuration file location.
+fn default_config_path() -> Result<String> {
+    Ok(BaseDirs::new()
+        .ok_or_else(|| anyhow!("No valid home directory found"))?
+        .config_dir()
+        .join(DEFAULT_CONFIG_FILENAME)
+        .to_str()
+        .ok_or_else(|| anyhow!("Could not convert path to string"))?
+        .to_string())
+}
 
 fn main() -> Result<()> {
     let matches = clap_app!(keybear =>
@@ -26,8 +44,15 @@ fn main() -> Result<()> {
         // Colored help messages
         (@global_setting ColoredHelp)
 
+        // The global configuration argument
+        (@arg config: -c --config
+            env(CONFIG_ENV_NAME)
+            default_value(&default_config_path()?)
+            global(true)
+            "Path of the configuration file")
+
         (@subcommand init =>
-            (about: "Configure a connection to the keybear server")
+            (about: "Generate the configuration file")
             (@setting DisableVersion)
             (@arg URL: +required "Sets the server .onion URL")
         )
@@ -71,6 +96,11 @@ fn main() -> Result<()> {
     )
     .get_matches();
 
+    // Get the configuration argument
+    let config_path: PathBuf = matches.value_of_t_or_exit("config");
+    // Load the configuration file
+    let config = Config::from_file(&config_path)?;
+
     // Use the proper subcommand module for the invoked subcommand.
     match matches
         .subcommand()
@@ -80,25 +110,25 @@ fn main() -> Result<()> {
         ("init", subcommand) => {
             let url = subcommand.value_of_t_or_exit::<String>("URL");
 
-            command::init(&url)
+            command::init(config, &url)
         }
         // kb show
         ("show", subcommand) => {
             let url = subcommand.value_of_t_or_exit::<String>("URL");
 
-            command::show(&url)
+            command::show(config, &url)
         }
         // kb ls
-        ("ls", _) => command::ls(),
+        ("ls", _) => command::ls(config),
         // kb find
-        ("find", _) => command::find(),
+        ("find", _) => command::find(config),
         // kb generate
         ("generate", subcommand) => {
             let name = subcommand.value_of_t_or_exit::<String>("NAME");
             let length = subcommand.value_of_t_or_exit::<usize>("length");
             let echo = subcommand.is_present("echo");
 
-            command::generate(&name, length, echo)
+            command::generate(config, &name, length, echo)
         }
         // kb insert
         ("insert", subcommand) => {
@@ -107,22 +137,31 @@ fn main() -> Result<()> {
             let length = subcommand.value_of_t_or_exit::<usize>("length");
             let echo = subcommand.is_present("echo");
 
-            command::insert(&name, &password, length, echo)
+            command::insert(config, &name, &password, length, echo)
         }
         // kb edit
         ("edit", subcommand) => {
             let name = subcommand.value_of_t_or_exit::<String>("NAME");
 
-            command::edit(&name)
+            command::edit(config, &name)
         }
         // kb rm
         ("rm", subcommand) => {
             let name = subcommand.value_of_t_or_exit::<String>("NAME");
 
-            command::rm(&name)
+            command::rm(config, &name)
         }
         (other, _) => bail!("Unrecognized subcommand \"{}\"", other),
     }?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn default_config_directory() {
+        // We should be able to get the default configuration directory on all OSes
+        super::default_config_path().unwrap();
+    }
 }

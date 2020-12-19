@@ -17,11 +17,16 @@ path = "src/main.rs"
 maintenance = { status = "experimental" }
 
 [dependencies]
-anyhow = "1.0.35"
+anyhow = "1.0.36"
 clap = "3.0.0-beta.2"
+directories-next = "2.0.0"
+log = "0.4.11"
+serde = { version = "1.0.118", features = ["derive"] }
+toml = "0.5.8"
 
 [dev-dependencies]
 assert_cmd = "1.0.2"
+tempdir = "0.3.7"
 
 [package.metadata.deb]
 license-file = ["LICENSE", "0"]

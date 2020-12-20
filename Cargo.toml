@@ -28,7 +28,7 @@ toml = "0.5.8"
 
 [dev-dependencies]
 assert_cmd = "1.0.2"
-tempdir = "0.3.7"
+tempfile = "3.1.0"
 
 [package.metadata.deb]
 license-file = ["LICENSE", "0"]

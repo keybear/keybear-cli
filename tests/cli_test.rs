@@ -20,7 +20,8 @@ fn register() {
     // Register to a non-existing onion address
     let mut cmd = Command::cargo_bin("kb").unwrap();
 
-    cmd.args(&["register", "-c", file_path.to_str().unwrap()])
+    // Only call the help command
+    cmd.args(&["register", "-c", file_path.to_str().unwrap(), "-h"])
         .assert()
         .success();
 }

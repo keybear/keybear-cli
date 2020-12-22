@@ -7,25 +7,23 @@ mod net;
 use crate::config::Config;
 use anyhow::{anyhow, bail, Result};
 use clap::clap_app;
-use directories_next::BaseDirs;
+use directories_next::ProjectDirs;
 use std::path::PathBuf;
 
-const CONFIG_ENV_NAME: &str = "KEYBEAR_CONFIG";
-const DEFAULT_CONFIG_FILENAME: &str = "keybear.toml";
+/// Names used for the directory in the configuration folder.
+pub const PROJECT_NAME: (&str, &str, &str) = ("com", "keybear", "keybear");
 
-/// Get the default configuration file location.
-fn default_config_path() -> Result<String> {
-    Ok(BaseDirs::new()
-        .ok_or_else(|| anyhow!("No valid home directory found"))?
-        .config_dir()
-        .join(DEFAULT_CONFIG_FILENAME)
-        .to_str()
-        .ok_or_else(|| anyhow!("Could not convert path to string"))?
-        .to_string())
-}
+/// Environment variable name for the configuration file location.
+pub const CONFIG_ENV_NAME: &str = "KEYBEAR_CONFIG";
+/// Default configuration file filename.
+pub const DEFAULT_CONFIG_FILENAME: &str = "keybear.toml";
 
+/// Main application entry point.
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize the logger
+    pretty_env_logger::init();
+
     let matches = clap_app!(keybear =>
         (version: clap::crate_version!())
         (author: clap::crate_authors!())
@@ -152,6 +150,19 @@ async fn main() -> Result<()> {
     }?;
 
     Ok(())
+}
+
+/// Get the default configuration file location.
+fn default_config_path() -> Result<String> {
+    Ok(
+        ProjectDirs::from(PROJECT_NAME.0, PROJECT_NAME.1, PROJECT_NAME.2)
+            .ok_or_else(|| anyhow!("No valid home directory found"))?
+            .config_dir()
+            .join(DEFAULT_CONFIG_FILENAME)
+            .to_str()
+            .ok_or_else(|| anyhow!("Could not convert path to string"))?
+            .to_string(),
+    )
 }
 
 #[cfg(test)]

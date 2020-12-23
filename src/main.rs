@@ -21,8 +21,8 @@ pub const DEFAULT_CONFIG_FILENAME: &str = "keybear.toml";
 /// Main application entry point.
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize the logger
-    pretty_env_logger::init();
+    // Initialize the panic handler
+    human_panic::setup_panic!();
 
     let matches = clap_app!(keybear =>
         (version: clap::crate_version!())
@@ -50,6 +50,15 @@ async fn main() -> Result<()> {
             default_value(&default_config_path()?)
             global(true)
             "Path of the configuration file")
+        // The global quiet argument
+        (@arg quiet: -q --quiet
+            global(true)
+            "Silence all output")
+        // The global verbosity argument
+        (@arg verbosity: -v --verbose
+            global(true)
+            multiple_occurrences(true)
+            "Verbose mode")
 
         (@subcommand register =>
             (about: "Register this client to the server")
@@ -94,6 +103,13 @@ async fn main() -> Result<()> {
         )
     )
     .get_matches();
+
+    // Initialize the logger
+    stderrlog::new()
+        .module(module_path!())
+        .verbosity(matches.occurrences_of("verbosity") as usize)
+        .quiet(matches.is_present("quiet"))
+        .init()?;
 
     // Get the configuration argument
     let config_path: PathBuf = matches.value_of_t_or_exit("config");

@@ -1,15 +1,15 @@
 use crate::{config::Config, net::Client};
 use anyhow::{anyhow, ensure, Result};
 use keybear_core::types::{RegisterDeviceRequest, RegisterDeviceResponse};
-use log::{debug, info, warn};
-use std::process;
+use log::{debug, error, info, warn};
+use std::{io::Write, process};
 use x25519_dalek::PublicKey;
 
 /// Handle the invoked command.
 pub async fn register(config: Config) -> Result<()> {
     // Exit when we are already registered
     if config.id_exists() {
-        eprintln!("Already registered to server");
+        error!("Client is already registered");
 
         process::exit(1);
     }

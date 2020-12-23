@@ -1,5 +1,5 @@
 use crate::config::Config;
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, ensure, Result};
 use keybear_core::crypto;
 use log::debug;
 use reqwest::{Client as HttpClient, Proxy, Url};
@@ -44,14 +44,25 @@ impl Client {
         // Build the URL with the path
         let url = Url::parse(&format!("http://{}:5219", &self.url))?.join(path)?;
 
-        self.client
+        let response = self
+            .client
             // Create a POST request
             .post(url)
             // Add the object as a JSON payload
             .json(request_object)
             // Send it
             .send()
-            .await?
+            .await?;
+
+        // Throw the server error when the status code isn't in the 200-299 range
+        ensure!(
+            response.status().is_success(),
+            "{}: {}",
+            response.status().to_string(),
+            response.text().await?
+        );
+
+        response
             // Try to convert the response to JSON
             .json()
             .await

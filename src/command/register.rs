@@ -1,7 +1,12 @@
-use crate::{config::Config, net::Client};
+use crate::{
+    config::Config,
+    net::{self, ProxyClient},
+};
 use anyhow::{anyhow, ensure, Result};
 use keybear_core::types::{RegisterDeviceRequest, RegisterDeviceResponse};
 use log::{debug, error, info, warn};
+use reqwest::{Client, Proxy, Url};
+use serde::{de::DeserializeOwned, Serialize};
 use std::{io::Write, process};
 use x25519_dalek::PublicKey;
 
@@ -16,9 +21,6 @@ pub async fn register(config: Config) -> Result<()> {
 
     info!("Registering client to keybear server");
 
-    // Setup an HTTP client using a Tor proxy
-    let client = Client::new(&config)?;
-
     // Generate a new secret key and save it
     let secret_key = config.generate_secret_key()?;
     // Generate a public keey from the secret key
@@ -28,12 +30,49 @@ pub async fn register(config: Config) -> Result<()> {
     let request = RegisterDeviceRequest::new(config.name(), &public_key);
 
     // Register the client
-    let response: RegisterDeviceResponse = client.unencrypted_post("v1/register", &request).await?;
+    let response: RegisterDeviceResponse =
+        unencrypted_post(&config, "v1/register", &request).await?;
 
-    eprintln!("Device succesfully registered as \"{}\"", response.name());
+    info!("Device succesfully registered as \"{}\"", response.name());
+
+    // Save the server public key from the response
+    config.save_server_public_key(&response.server_public_key()?)?;
 
     // Save the ID from the response
     config.save_id(response.id())?;
 
     Ok(())
+}
+
+/// Make an un-encrypted POST request and get a response back.
+pub async fn unencrypted_post<S, D>(config: &Config, path: &str, request_object: &S) -> Result<D>
+where
+    S: Serialize,
+    D: DeserializeOwned,
+{
+    // Setup an HTTP client using a Tor proxy
+    let client = Client::new_proxy(&config)?;
+
+    let response = client
+        // Create a POST request
+        .post(net::proxy_url(config.url(), path)?)
+        // Add the object as a JSON payload
+        .json(request_object)
+        // Send it
+        .send()
+        .await?;
+
+    // Throw the server error when the status code isn't in the 200-299 range
+    ensure!(
+        response.status().is_success(),
+        "{}: {}",
+        response.status().to_string(),
+        response.text().await?
+    );
+
+    response
+        // Try to convert the response to JSON
+        .json()
+        .await
+        .map_err(|err| anyhow!(err))
 }

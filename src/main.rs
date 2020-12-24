@@ -70,6 +70,7 @@ async fn main() -> Result<()> {
             (@arg NAME: +required "Name of the password")
         )
         (@subcommand ls =>
+            (alias: "list")
             (about: "List all passwords")
             (@setting DisableVersion)
         )
@@ -125,12 +126,12 @@ async fn main() -> Result<()> {
         ("register", _) => command::register(config).await,
         // kb show
         ("show", subcommand) => {
-            let url = subcommand.value_of_t_or_exit::<String>("URL");
+            let name = subcommand.value_of_t_or_exit::<String>("NAME");
 
-            command::show(config, &url)
+            command::show(config, &name).await
         }
         // kb ls
-        ("ls", _) => command::ls(config),
+        ("ls", _) => command::ls(config).await,
         // kb find
         ("find", _) => command::find(config),
         // kb generate

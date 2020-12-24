@@ -1,7 +1,24 @@
-use crate::config::Config;
+use crate::{config::Config, net::Client};
 use anyhow::Result;
+use keybear_core::types::{PasswordRequest, PasswordResponse};
+use log::info;
 
 /// Handle the invoked command.
-pub fn show(config: Config, name: &str) -> Result<()> {
+pub async fn show(config: Config, name: &str) -> Result<()> {
+    info!("Retrieving password for name \"{}\"", name);
+
+    // Setup the HTTP client
+    let client = Client::new(&config)?;
+
+    // Build the request object
+    let request = PasswordRequest::from_name(name);
+
+    // Request the password
+    let response: PasswordResponse = client
+        .post(format!("v1/passwords/{}", name), &request)
+        .await?;
+
+    println!("{}", response.password());
+
     Ok(())
 }

@@ -2,17 +2,20 @@ use crate::PROJECT_NAME;
 use anyhow::{anyhow, Error, Result};
 use directories_next::ProjectDirs;
 use keybear_core::crypto::StaticSecretExt;
-use log::debug;
+use log::{debug, info};
 use serde::Deserialize;
 use std::{
-    fs,
+    fs::{self, File},
+    io::Read,
     path::{Path, PathBuf},
     str::FromStr,
 };
-use x25519_dalek::StaticSecret;
+use x25519_dalek::{PublicKey, SharedSecret, StaticSecret};
 
 /// Default static key file filename.
 const DEFAULT_SECRET_KEY_FILENAME: &str = "keybear.sk";
+/// Default server public key file filename.
+const DEFAULT_SERVER_PUBLIC_KEY_FILENAME: &str = "server.pk";
 /// Client ID file filename.
 const DEFAULT_ID_FILENAME: &str = "keybear.id";
 
@@ -28,6 +31,10 @@ pub struct Config {
     /// Where the secret key lives.
     #[serde(default = "default_secret_key_path")]
     secret_key_path: PathBuf,
+
+    /// Where the public key of the server lives.
+    #[serde(default = "default_server_public_key_path")]
+    server_public_key_path: PathBuf,
 
     /// Where the ID to communicate with the server lives.
     #[serde(default = "default_id_path")]
@@ -95,6 +102,13 @@ impl Config {
         Ok(secret_key)
     }
 
+    /// Load the secret key and the server public key and create a shared key.
+    pub fn shared_key(&self) -> Result<SharedSecret> {
+        Ok(self
+            .secret_key()?
+            .diffie_hellman(&self.server_public_key()?))
+    }
+
     /// Load the secret key from it's file.
     pub fn secret_key(&self) -> Result<StaticSecret> {
         StaticSecret::from_file(&self.secret_key_path)
@@ -116,6 +130,33 @@ impl Config {
         Ok(())
     }
 
+    /// Save the public key of the server.
+    pub fn save_server_public_key(&self, server_public_key: &PublicKey) -> Result<()> {
+        debug!(
+            "Saving server public key at {:?}",
+            &self.server_public_key_path
+        );
+
+        // Create the folder it belongs to
+        fs::create_dir_all(self.server_public_key_path.parent().ok_or_else(|| {
+            anyhow!(
+                "invalid public server key path {:?} has no parent directory",
+                self.server_public_key_path
+            )
+        })?)?;
+
+        // Try to write the key as raw bytes to the disk
+        fs::write(&self.server_public_key_path, server_public_key.to_bytes()).map_err(|err| {
+            anyhow!(
+                "Could not write public server key to file {:?}: {}",
+                self.server_public_key_path,
+                err
+            )
+        })?;
+
+        Ok(())
+    }
+
     /// Load the secret key from it's file.
     pub fn id(&self) -> Result<String> {
         fs::read_to_string(&self.id_path).map_err(|err| {
@@ -130,6 +171,36 @@ impl Config {
     /// Check if the secret key already exists.
     pub fn id_exists(&self) -> bool {
         self.id_path.exists()
+    }
+
+    /// Load the server public key from file.
+    fn server_public_key(&self) -> Result<PublicKey> {
+        debug!(
+            "Loading server public key from file {:?}",
+            self.server_public_key_path
+        );
+
+        // Read the file
+        let mut f = File::open(&self.server_public_key_path).map_err(|err| {
+            anyhow!(
+                "Reading crypto keys from file {:?} failed: {}",
+                self.server_public_key_path,
+                err
+            )
+        })?;
+
+        // Read exactly the bytes from the file
+        let mut bytes = [0; 32];
+        f.read_exact(&mut bytes).map_err(|err| {
+            anyhow!(
+                "Server public key file {:?} has wrong size, it might be corrupt: {}",
+                self.server_public_key_path,
+                err
+            )
+        })?;
+
+        // Try to construct the public key from the bytes
+        Ok(PublicKey::from(bytes))
     }
 }
 
@@ -152,6 +223,14 @@ fn default_secret_key_path() -> PathBuf {
         .expect("No valid home directory found")
         .data_dir()
         .join(DEFAULT_SECRET_KEY_FILENAME)
+}
+
+/// The default path where the public key of the server lives.
+fn default_server_public_key_path() -> PathBuf {
+    ProjectDirs::from(PROJECT_NAME.0, PROJECT_NAME.1, PROJECT_NAME.2)
+        .expect("No valid home directory found")
+        .data_dir()
+        .join(DEFAULT_SERVER_PUBLIC_KEY_FILENAME)
 }
 
 /// The default path where the ID to communicate with the server lives.

@@ -86,6 +86,7 @@ async fn main() -> Result<()> {
             (@arg echo: -e --echo "Echo the password back to the console")
         )
         (@subcommand insert =>
+            (alias: "new")
             (about: "Insert a new password")
             (@setting DisableVersion)
             (@arg NAME: +required "Name of the password")
@@ -146,10 +147,9 @@ async fn main() -> Result<()> {
         ("insert", subcommand) => {
             let name = subcommand.value_of_t_or_exit::<String>("NAME");
             let password = subcommand.value_of_t_or_exit::<String>("PASSWORD");
-            let length = subcommand.value_of_t_or_exit::<usize>("length");
             let echo = subcommand.is_present("echo");
 
-            command::insert(config, &name, &password, length, echo)
+            command::insert(config, &name, &password, echo).await
         }
         // kb edit
         ("edit", subcommand) => {

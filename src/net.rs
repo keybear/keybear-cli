@@ -52,7 +52,7 @@ impl<'a> Client<'a> {
         D: DeserializeOwned,
         S: AsRef<str>,
     {
-        self.request(path.as_ref(), payload, Method::POST).await
+        self.request(path.as_ref(), payload, Method::GET).await
     }
 
     /// Perform a request with an unspecified method.
@@ -61,16 +61,24 @@ impl<'a> Client<'a> {
         P: Serialize,
         D: DeserializeOwned,
     {
+        debug!("Creating {} request to \"{}\"", &method, path);
+
+        // Get the shared key to encrypt and decrypt
+        let shared_key = self.config.shared_key()?;
+
+        // Build the proxy URL
+        let url = proxy_url(&self.config.url(), path)?;
+
+        // Build the request
         let request = self
             .client
-            // Create a POST request
-            .request(method, proxy_url(&self.config.url(), path)?)
+            .request(method, url)
             .header(CLIENT_ID_HEADER, self.config.id()?);
 
         // Add the object as an encrypted payload if applicable
         let request = if let Some(payload) = payload {
             // Try to encrypt the payload
-            let encrypted = crypto::encrypt(&self.config.shared_key()?, payload)?;
+            let encrypted = crypto::encrypt(&shared_key, payload)?;
 
             request.body(encrypted)
         } else {
@@ -80,6 +88,8 @@ impl<'a> Client<'a> {
         // Send it
         let response = request.send().await?;
 
+        debug!("Response received");
+
         // Throw the server error when the status code isn't in the 200-299 range
         ensure!(
             response.status().is_success(),
@@ -88,11 +98,11 @@ impl<'a> Client<'a> {
             response.text().await?
         );
 
-        response
-            // Try to convert the response to JSON
-            .json()
-            .await
-            .map_err(|err| anyhow!(err))
+        // Get the bytes from the response
+        let bytes = response.bytes().await?;
+
+        // Try to decrypt the response
+        crypto::decrypt(&shared_key, &bytes)
     }
 }
 

@@ -1,9 +1,13 @@
 use crate::config::Config;
 use anyhow::{anyhow, ensure, Result};
 use keybear_core::{crypto, CLIENT_ID_HEADER};
-use log::debug;
+use log::{debug, trace};
 use reqwest::{Client as HttpClient, Method, Proxy, Url};
 use serde::{de::DeserializeOwned, Serialize};
+use std::time::Duration;
+
+// Request timeout duration in seconds.
+const REQUEST_TIMEOUT: u64 = 10;
 
 /// Add a constructor to the reqwest client that sets up a proxied connection.
 pub trait ProxyClient {
@@ -73,10 +77,13 @@ impl<'a> Client<'a> {
         let request = self
             .client
             .request(method, url)
+            .timeout(Duration::new(REQUEST_TIMEOUT, 0))
             .header(CLIENT_ID_HEADER, self.config.id()?);
 
         // Add the object as an encrypted payload if applicable
         let request = if let Some(payload) = payload {
+            trace!("Encrypting payload");
+
             // Try to encrypt the payload
             let encrypted = crypto::encrypt(&shared_key, payload)?;
 
@@ -85,10 +92,12 @@ impl<'a> Client<'a> {
             request
         };
 
+        trace!("Sending request");
+
         // Send it
         let response = request.send().await?;
 
-        debug!("Response received");
+        trace!("Response received");
 
         // Throw the server error when the status code isn't in the 200-299 range
         ensure!(
@@ -108,7 +117,7 @@ impl<'a> Client<'a> {
 
 impl ProxyClient for HttpClient {
     fn new_proxy(config: &Config) -> Result<Self> {
-        debug!("Setting up HTTP client to connect to Tor proxy");
+        trace!("Setting up HTTP client to connect to Tor proxy");
 
         // Configure the SOCKS5 Url with the custom port
         let mut url = Url::parse("socks5h://127.0.0.1")?;

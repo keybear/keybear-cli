@@ -79,10 +79,10 @@ async fn main() -> Result<()> {
             (@setting DisableVersion)
         )
         (@subcommand generate =>
-            (about: "Generate a new password")
+            (about: "Generate a new pass-phrase")
             (@setting DisableVersion)
             (@arg NAME: +required "Name of the password")
-            (@arg length: -l --length default_value("25") "Amount of characters to generate")
+            (@arg length: -l --length default_value("5") "Amount of words to generate")
             (@arg echo: -e --echo "Echo the password back to the console")
         )
         (@subcommand insert =>
@@ -141,7 +141,7 @@ async fn main() -> Result<()> {
             let length = subcommand.value_of_t_or_exit::<usize>("length");
             let echo = subcommand.is_present("echo");
 
-            command::generate(config, &name, length, echo)
+            command::generate(config, &name, length, echo).await
         }
         // kb insert
         ("insert", subcommand) => {

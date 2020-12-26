@@ -1,5 +1,4 @@
 mod edit;
-mod find;
 mod generate;
 mod insert;
 mod ls;

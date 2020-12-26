@@ -74,10 +74,6 @@ async fn main() -> Result<()> {
             (about: "List all passwords")
             (@setting DisableVersion)
         )
-        (@subcommand find =>
-            (about: "List passwords that match pass-names")
-            (@setting DisableVersion)
-        )
         (@subcommand generate =>
             (about: "Generate a new pass-phrase")
             (@setting DisableVersion)
@@ -133,8 +129,6 @@ async fn main() -> Result<()> {
         }
         // kb ls
         ("ls", _) => command::ls(config).await,
-        // kb find
-        ("find", _) => command::find(config),
         // kb generate
         ("generate", subcommand) => {
             let name = subcommand.value_of_t_or_exit::<String>("NAME");

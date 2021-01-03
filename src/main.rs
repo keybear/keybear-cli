@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
 
     // Initialize the logger
     stderrlog::new()
-        .module(module_path!())
+        .modules(vec![module_path!(), "keybear_core"])
         .verbosity(matches.occurrences_of("verbosity") as usize)
         .quiet(matches.is_present("quiet"))
         .init()?;

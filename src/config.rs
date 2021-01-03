@@ -2,7 +2,7 @@ use crate::PROJECT_NAME;
 use anyhow::{anyhow, Error, Result};
 use directories_next::ProjectDirs;
 use keybear_core::crypto::StaticSecretExt;
-use log::{debug, info};
+use log::debug;
 use serde::Deserialize;
 use std::{
     fs::{self, File},

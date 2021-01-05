@@ -18,7 +18,7 @@ maintenance = { status = "experimental" }
 
 [dependencies]
 anyhow = "1.0.37"
-chbs = "0.0.10"
+chbs = "0.1.0"
 clap = "3.0.0-beta.2"
 directories-next = "2.0.0"
 human-panic = "1.0.3"

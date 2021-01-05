@@ -19,7 +19,7 @@ pub const CONFIG_ENV_NAME: &str = "KEYBEAR_CONFIG";
 pub const DEFAULT_CONFIG_FILENAME: &str = "keybear.toml";
 
 /// Main application entry point.
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     // Initialize the panic handler
     human_panic::setup_panic!();

@@ -18,16 +18,16 @@ maintenance = { status = "experimental" }
 
 [dependencies]
 anyhow = "1.0.37"
-chbs = "0.0.10"
+chbs = "0.1.0"
 clap = "3.0.0-beta.2"
 directories-next = "2.0.0"
 human-panic = "1.0.3"
-keybear-core = "0.1.4"
+keybear-core = "0.2.0"
 log = "0.4.11"
-reqwest = { version = "0.10.10", default-features = false, features = ["socks", "json"] }
+reqwest = { version = "0.11.0", default-features = false, features = ["socks", "json"] }
 serde = { version = "1.0.118", features = ["derive"] }
 stderrlog = "0.5.0"
-tokio = { version = "0.2.0", default-features = false, features = ["macros"] }
+tokio = { version = "1.0.1", default-features = false, features = ["macros", "rt"] }
 toml = "0.5.8"
 x25519-dalek = { version = "1.1.0", features = ["serde"] }
 

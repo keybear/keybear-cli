@@ -3,11 +3,14 @@ use crate::{
     net::{self, ProxyClient},
 };
 use anyhow::{anyhow, ensure, Result};
-use keybear_core::types::{RegisterDeviceRequest, RegisterDeviceResponse};
-use log::{debug, error, info, warn};
-use reqwest::{Client, Proxy, Url};
+use keybear_core::{
+    route::v1,
+    types::{RegisterDeviceRequest, RegisterDeviceResponse},
+};
+use log::{error, info};
+use reqwest::Client;
 use serde::{de::DeserializeOwned, Serialize};
-use std::{io::Write, process};
+use std::process;
 use x25519_dalek::PublicKey;
 
 /// Handle the invoked command.
@@ -31,7 +34,7 @@ pub async fn register(config: Config) -> Result<()> {
 
     // Register the client
     let response: RegisterDeviceResponse =
-        unencrypted_post(&config, "v1/register", &request).await?;
+        unencrypted_post(&config, &format!("v1{}", v1::REGISTER), &request).await?;
 
     info!("Device succesfully registered as \"{}\"", response.name());
 

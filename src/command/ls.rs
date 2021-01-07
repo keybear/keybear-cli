@@ -1,6 +1,6 @@
 use crate::{config::Config, net::Client};
 use anyhow::Result;
-use keybear_core::types::PublicPassword;
+use keybear_core::{route::v1, types::PublicPassword};
 use log::info;
 
 /// Handle the invoked command.
@@ -11,7 +11,9 @@ pub async fn ls(config: Config) -> Result<()> {
     let client = Client::new(&config)?;
 
     // Request the password
-    let response: Vec<PublicPassword> = client.get::<(), _, _>("v1/passwords", None).await?;
+    let response: Vec<PublicPassword> = client
+        .get::<(), _, _>(&format!("v1{}", v1::PASSWORD), None)
+        .await?;
 
     // Print the passwords
     response.into_iter().for_each(|pass| {

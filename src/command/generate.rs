@@ -1,7 +1,10 @@
 use crate::{config::Config, net::Client};
 use anyhow::Result;
 use chbs::{config::BasicConfig, scheme::ToScheme};
-use keybear_core::types::{PublicPassword, RegisterPasswordRequest};
+use keybear_core::{
+    route::v1,
+    types::{PublicPassword, RegisterPasswordRequest},
+};
 use log::info;
 
 /// Handle the invoked command.
@@ -20,7 +23,7 @@ pub async fn generate(config: Config, name: &str, length: usize, echo: bool) -> 
     let request = RegisterPasswordRequest::new::<_, _, String, String>(name, &password, None, None);
 
     // Request the password
-    let response: PublicPassword = client.post("v1/passwords", &request).await?;
+    let response: PublicPassword = client.post(format!("v1{}", v1::PASSWORD), &request).await?;
 
     info!("Password successfully added with ID: {}", response.id());
 

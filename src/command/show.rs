@@ -1,6 +1,9 @@
 use crate::{config::Config, net::Client};
 use anyhow::Result;
-use keybear_core::types::{PasswordRequest, PasswordResponse};
+use keybear_core::{
+    route::v1,
+    types::{PasswordRequest, PasswordResponse},
+};
 use log::info;
 
 /// Handle the invoked command.
@@ -15,7 +18,7 @@ pub async fn show(config: Config, name: &str) -> Result<()> {
 
     // Request the password
     let response: PasswordResponse = client
-        .post(format!("v1/passwords/{}", name), &request)
+        .post(format!("v1{}/{}", v1::PASSWORD, name), &request)
         .await?;
 
     println!("{}", response.password());

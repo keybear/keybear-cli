@@ -18,7 +18,7 @@ pub async fn show(config: Config, name: &str) -> Result<()> {
 
     // Request the password
     let response: PasswordResponse = client
-        .post(format!("v1{}/{}", v1::PASSWORD, name), &request)
+        .post(format!("{}/{}", v1::PASSWORD, name), &request)
         .await?;
 
     println!("{}", response.password());

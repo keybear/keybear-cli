@@ -11,9 +11,7 @@ pub async fn ls(config: Config) -> Result<()> {
     let client = Client::new(&config)?;
 
     // Request the password
-    let response: Vec<PublicPassword> = client
-        .get::<(), _, _>(&format!("v1{}", v1::PASSWORD), None)
-        .await?;
+    let response: Vec<PublicPassword> = client.get::<(), _, _>(v1::PASSWORD, None).await?;
 
     // Print the passwords
     response.into_iter().for_each(|pass| {

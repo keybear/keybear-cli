@@ -34,7 +34,7 @@ pub async fn register(config: Config) -> Result<()> {
 
     // Register the client
     let response: RegisterDeviceResponse =
-        unencrypted_post(&config, &format!("v1{}", v1::REGISTER), &request).await?;
+        unencrypted_post(&config, v1::REGISTER, &request).await?;
 
     info!("Device succesfully registered as \"{}\"", response.name());
 

@@ -17,7 +17,7 @@ pub async fn insert(config: Config, name: &str, password: &str, echo: bool) -> R
     let request = RegisterPasswordRequest::new::<_, _, String, String>(name, password, None, None);
 
     // Request the password
-    let response: PublicPassword = client.post(format!("v1{}", v1::PASSWORD), &request).await?;
+    let response: PublicPassword = client.post(v1::PASSWORD, &request).await?;
 
     info!("Password successfully added with ID: {}", response.id());
 

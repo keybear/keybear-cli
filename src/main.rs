@@ -155,7 +155,7 @@ async fn main() -> Result<()> {
         ("rm", subcommand) => {
             let name = subcommand.value_of_t_or_exit::<String>("NAME");
 
-            command::rm(config, &name)
+            command::rm(config, &name).await
         }
         (other, _) => bail!("Unrecognized subcommand \"{}\"", other),
     }?;

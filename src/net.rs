@@ -59,6 +59,17 @@ impl<'a> Client<'a> {
         self.request(path.as_ref(), payload, Method::GET).await
     }
 
+    /// Send an encrypted DELETE request.
+    pub async fn delete<S, P, D>(&self, path: S, payload: &P) -> Result<D>
+    where
+        P: Serialize,
+        D: DeserializeOwned,
+        S: AsRef<str>,
+    {
+        self.request(path.as_ref(), Some(payload), Method::DELETE)
+            .await
+    }
+
     /// Perform a request with an unspecified method.
     async fn request<P, D>(&self, path: &str, payload: Option<&P>, method: Method) -> Result<D>
     where

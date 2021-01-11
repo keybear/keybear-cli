@@ -1,6 +1,10 @@
 use crate::config::Config;
 use anyhow::{anyhow, ensure, Result};
-use keybear_core::{crypto, CLIENT_ID_HEADER};
+use keybear_core::{
+    crypto::{self, Nonce},
+    route::v1,
+    CLIENT_ID_HEADER,
+};
 use log::{debug, trace};
 use reqwest::{Client as HttpClient, Method, Proxy, Url};
 use serde::{de::DeserializeOwned, Serialize};
@@ -76,6 +80,40 @@ impl<'a> Client<'a> {
         P: Serialize,
         D: DeserializeOwned,
     {
+        debug!("Trying to get nonce to make a request to \"{}\"", path);
+
+        // Build the proxy URL for the nonce
+        let url = proxy_url(&self.config.url(), v1::NONCE)?;
+
+        // Build the request for the nonce
+        let request = self
+            .client
+            .request(Method::GET, url)
+            .timeout(Duration::new(REQUEST_TIMEOUT, 0))
+            .header(CLIENT_ID_HEADER, self.config.id()?);
+
+        // Send it
+        let response = request.send().await?;
+
+        trace!("Response received for nonce request");
+
+        // Throw the server error when the status code isn't in the 200-299 range
+        ensure!(
+            response.status().is_success(),
+            "{}: {}",
+            response.status().to_string(),
+            response.text().await?
+        );
+
+        // Get the bytes from the response
+        let bytes = response.bytes().await?;
+
+        // Throw an error when we got something else back then 12 bytes (the size of the nonce)
+        ensure!(bytes.len() == 12, "Nonce response size is incorrect");
+
+        // Construct the nonce
+        let nonce = Nonce::from_slice(&bytes);
+
         debug!("Creating {} request to \"{}\"", &method, path);
 
         // Get the shared key to encrypt and decrypt
@@ -96,7 +134,7 @@ impl<'a> Client<'a> {
             trace!("Encrypting payload");
 
             // Try to encrypt the payload
-            let encrypted = crypto::encrypt(&shared_key, payload)?;
+            let encrypted = crypto::encrypt(&shared_key, &nonce, payload)?;
 
             request.body(encrypted)
         } else {
@@ -122,7 +160,7 @@ impl<'a> Client<'a> {
         let bytes = response.bytes().await?;
 
         // Try to decrypt the response
-        crypto::decrypt(&shared_key, &bytes)
+        crypto::decrypt(&shared_key, &nonce, &bytes)
     }
 }
 

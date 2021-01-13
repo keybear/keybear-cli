@@ -25,7 +25,7 @@ human-panic = "1.0.3"
 keybear-core = "0.3.1"
 log = "0.4.13"
 reqwest = { version = "0.11.0", default-features = false, features = ["socks", "json"] }
-serde = { version = "1.0.118", features = ["derive"] }
+serde = { version = "1.0.119", features = ["derive"] }
 stderrlog = "0.5.1"
 tokio = { version = "1.0.1", default-features = false, features = ["macros", "rt"] }
 toml = "0.5.8"
@@ -33,7 +33,7 @@ x25519-dalek = { version = "1.1.0", features = ["serde"] }
 
 [dev-dependencies]
 assert_cmd = "1.0.2"
-tempfile = "3.1.0"
+tempfile = "3.2.0"
 
 [package.metadata.deb]
 license-file = ["LICENSE", "0"]

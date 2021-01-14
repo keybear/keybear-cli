@@ -106,7 +106,7 @@ impl<'a> Client<'a> {
         );
 
         // Get the bytes from the response
-        let bytes = response.bytes().await?;
+        let bytes = response.json::<[u8; 12]>().await?;
 
         // Throw an error when we got something else back then 12 bytes (the size of the nonce)
         ensure!(bytes.len() == 12, "Nonce response size is incorrect");

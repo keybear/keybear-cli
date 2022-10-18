@@ -19,7 +19,7 @@ maintenance = { status = "experimental" }
 [dependencies]
 anyhow = "1.0.38"
 chbs = "0.1.0"
-clap = "3.0.0-beta.2"
+clap = "4.0.16"
 directories-next = "2.0.0"
 human-panic = "1.0.3"
 keybear-core = "0.3.2"
